@@ -62,3 +62,22 @@ export function sampleAssignments(): Assignment[] {
     createdAt: new Date().toISOString(),
   }));
 }
+
+export function generateSampleAssignments(count = 10_000): Assignment[] {
+  const subjects = ['Lập trình Web', 'Cơ sở dữ liệu', 'Tiếng Anh', 'Cấu trúc dữ liệu'];
+  const priorities: Assignment['priority'][] = ['high', 'medium', 'low'];
+  const now = new Date();
+  return Array.from({ length: count }, (_, index) => {
+    const due = new Date(now);
+    due.setDate(now.getDate() + ((index % 31) - 10));
+    return {
+      id: `stress-${index + 1}`,
+      subject: subjects[index % subjects.length],
+      title: `Bài tập mẫu hiệu năng ${index + 1}`,
+      dueDate: toDateInput(due),
+      priority: priorities[index % priorities.length],
+      completed: index % 5 === 0,
+      createdAt: now.toISOString(),
+    };
+  });
+}

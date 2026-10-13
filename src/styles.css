@@ -1,9 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 :root {
   color-scheme: light;
   font-family:
-    'Plus Jakarta Sans',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -24,6 +21,30 @@
   --danger: #b42318;
   --focus: #0d9488;
   --header-height: 76px;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --surface: #16302d;
+  --surface-muted: #1c3b37;
+  --text: #e8f5f2;
+  --text-muted: #a6c2bd;
+  --border: #31554f;
+  --primary-soft: #214f49;
+  background: #102522;
+  color: var(--text);
+}
+[data-theme='dark'] .topbar,
+[data-theme='dark'] .table-scroll,
+[data-theme='dark'] .search input,
+[data-theme='dark'] .stat-card,
+[data-theme='dark'] .check-button {
+  background: var(--surface);
+  color: var(--text);
+}
+[data-theme='dark'] thead,
+[data-theme='dark'] .tabs {
+  background: var(--surface-muted);
 }
 
 * {
@@ -246,6 +267,7 @@ h1 > span {
   gap: 16px;
 }
 .stat-card {
+  min-height: 148px;
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -414,6 +436,7 @@ progress::-moz-progress-bar {
 }
 .tab {
   min-height: 40px;
+  min-width: 116px;
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
@@ -473,6 +496,57 @@ progress::-moz-progress-bar {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: white;
+}
+.virtual-list {
+  height: 560px;
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.virtual-row {
+  padding: 0 8px;
+}
+.assignment-card {
+  min-height: 84px;
+  padding: 14px 8px;
+  display: grid;
+  grid-template-columns: 44px minmax(220px, 1.8fr) minmax(120px, 1fr) 100px 130px auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.assignment-card:hover {
+  background: var(--surface-muted);
+}
+.assignment-card .assignment-name {
+  min-width: 0;
+}
+.card-actions {
+  display: flex;
+  gap: 2px;
+}
+.pin-button.pinned {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.statistics-panel {
+  margin: -14px 0 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.statistics-panel h2 {
+  margin: 0 0 6px;
+}
+.statistics-panel p {
+  color: var(--text-muted);
+}
+.statistics-panel ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
 }
 table {
   width: 100%;
@@ -671,6 +745,11 @@ tbody tr:hover {
   margin-left: auto;
 }
 .empty-state {
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 54px 20px;
   border: 1px solid var(--border);
   border-radius: 12px;

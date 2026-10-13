@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { loadAssignments } from './assignmentsSlice';
 import { daysUntil, type StatusFilter } from './types';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export function useAssignments() {
   const dispatch = useAppDispatch();
   const state = useAppSelector((state) => state.assignments);
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     void dispatch(loadAssignments());
@@ -44,13 +46,13 @@ export function useAssignments() {
             matchesStatus &&
             `${item.subject} ${item.title}`
               .toLocaleLowerCase('vi')
-              .includes(query.trim().toLocaleLowerCase('vi'))
+              .includes(debouncedQuery.trim().toLocaleLowerCase('vi'))
           );
         })
         .sort(
           (a, b) => Number(a.completed) - Number(b.completed) || a.dueDate.localeCompare(b.dueDate),
         ),
-    [state.items, filter, query, now],
+    [state.items, filter, debouncedQuery, now],
   );
   return { ...state, items, counts, filter, setFilter, query, setQuery, now };
 }

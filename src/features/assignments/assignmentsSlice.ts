@@ -61,6 +61,9 @@ const assignmentsSlice = createSlice({
         };
       },
     },
+    addAssignments(state, action: PayloadAction<Assignment[]>) {
+      state.items.push(...action.payload);
+    },
     toggleAssignment(state, action: PayloadAction<string>) {
       const item = state.items.find((item) => item.id === action.payload);
       if (item) item.completed = !item.completed;
@@ -87,6 +90,6 @@ const assignmentsSlice = createSlice({
         state.error = action.payload ?? 'Không thể tải bài tập.';
       }),
 });
-export const { addAssignment, toggleAssignment, deleteAssignment, setStorageError } =
+export const { addAssignment, addAssignments, toggleAssignment, deleteAssignment, setStorageError } =
   assignmentsSlice.actions;
 export default assignmentsSlice.reducer;

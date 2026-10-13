@@ -1,28 +1,26 @@
-import { useState } from 'react';
 import {
   BookOpen,
   CalendarDays,
-  Check,
-  CheckCheck,
-  Circle,
-  Clock3,
   GraduationCap,
-  ListTodo,
+  Moon,
   Plus,
   Search,
   Sparkles,
-  Trash2,
+  Sun,
 } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { useAppDispatch } from './app/hooks';
 import { Tabs } from './components/Tabs';
+import { useTheme } from './contexts/ThemeContext';
 import { AssignmentForm } from './features/assignments/AssignmentForm';
-import {
-  deleteAssignment,
-  loadAssignments,
-  toggleAssignment,
-} from './features/assignments/assignmentsSlice';
-import { deadlineLabel, daysUntil, type StatusFilter } from './features/assignments/types';
+import { AssignmentList } from './features/assignments/AssignmentList';
+import { addAssignments, loadAssignments } from './features/assignments/assignmentsSlice';
+import { generateSampleAssignments } from './features/assignments/repository';
+import { type StatusFilter } from './features/assignments/types';
 import { useAssignments } from './features/assignments/useAssignments';
+
+const Statistics = lazy(() => import('./features/assignments/Statistics'));
 
 const filters: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'Tất cả' },
@@ -30,13 +28,16 @@ const filters: { value: StatusFilter; label: string }[] = [
   { value: 'overdue', label: 'Quá hạn' },
   { value: 'completed', label: 'Đã hoàn thành' },
 ];
-const priorities = { high: 'Cao', medium: 'Trung bình', low: 'Thấp' };
-
 export default function App() {
   const { items, counts, filter, setFilter, query, setQuery, now, status, error, storageError } =
     useAssignments();
   const dispatch = useAppDispatch();
+  const { theme, toggleTheme } = useTheme();
   const [showForm, setShowForm] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const createStressData = useCallback(() => {
+    dispatch(addAssignments(generateSampleAssignments(10_000)));
+  }, [dispatch]);
   const progress = counts.all ? Math.round((counts.completed / counts.all) * 100) : 0;
   return (
     <div className="app-shell">
@@ -57,6 +58,9 @@ export default function App() {
             </a>
           </nav>
           <div className="header-meta">
+            <button className="icon-button" aria-label="Đổi chủ đề sáng tối" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
+            </button>
             <span className="today">
               <CalendarDays size={17} aria-hidden="true" />
               <span className="date-full">
@@ -80,62 +84,40 @@ export default function App() {
       <div className="main-shell" id="top">
         <main>
           <div className="page-heading">
-            <div>
-              <div className="eyebrow">HỌC TẬP CÓ KẾ HOẠCH</div>
-              <h1>
-                Deadline của bạn<span>.</span>
-              </h1>
-              <p>Theo dõi bài tập, chủ động thời gian, bớt một nỗi lo.</p>
-            </div>
-            <button
-              className="primary-button"
-              disabled={status !== 'succeeded'}
-              onClick={() => setShowForm(true)}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '0.25rem',
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
+              }}
             >
-              <Plus size={19} /> Thêm bài tập
-            </button>
+              <button
+                className="primary-button"
+                disabled={status !== 'succeeded'}
+                onClick={() => setShowForm(true)}
+              >
+                <Plus size={19} /> Thêm bài tập
+              </button>
+              <button className="secondary-button" onClick={createStressData}>
+                Tạo 10.000 bài tập mẫu
+              </button>
+              <button
+                className="secondary-button"
+                onClick={() => setShowStatistics((value) => !value)}
+              >
+                {showStatistics ? 'Ẩn thống kê' : 'Xem thống kê'}
+              </button>
+            </div>
           </div>
-          <section className="stats" aria-label="Thống kê bài tập">
-            {[
-              {
-                title: 'Tổng bài tập',
-                count: counts.all,
-                icon: <BookOpen size={21} />,
-                color: 'sage',
-                detail: 'Tất cả môn học',
-              },
-              {
-                title: 'Chưa hoàn thành',
-                count: counts.pending,
-                icon: <Clock3 size={21} />,
-                color: 'amber',
-                detail: 'Đang chờ bạn chinh phục',
-              },
-              {
-                title: 'Đã quá hạn',
-                count: counts.overdue,
-                icon: <CalendarDays size={21} />,
-                color: 'red',
-                detail: 'Ưu tiên xử lý sớm nhé',
-              },
-              {
-                title: 'Đã hoàn thành',
-                count: counts.completed,
-                icon: <CheckCheck size={21} />,
-                color: 'green',
-                detail: 'Thêm một bước tiến bộ',
-              },
-            ].map((stat) => (
-              <article className="stat-card" key={stat.title}>
-                <div className="stat-top">
-                  <span>{stat.title}</span>
-                  <span className={`stat-icon ${stat.color}`}>{stat.icon}</span>
-                </div>
-                <strong>{stat.count.toString().padStart(2, '0')}</strong>
-                <small>{stat.detail}</small>
-              </article>
-            ))}
-          </section>
+
+          {showStatistics && (
+            <Suspense fallback={<div role="status">Đang tải thống kê…</div>}>
+              <Statistics items={items} />
+            </Suspense>
+          )}
+
           <section className="progress-banner">
             <div className="progress-symbol">
               <Sparkles size={23} />
@@ -165,11 +147,7 @@ export default function App() {
                 <h2>
                   Danh sách bài tập <span>{counts.all}</span>
                 </h2>
-                <p>Mọi deadline, trong một góc nhỏ gọn gàng.</p>
               </div>
-              <span className="sort-label">
-                <ListTodo size={16} /> Hạn nộp gần nhất
-              </span>
             </div>
             {storageError && (
               <div role="alert" className="error-banner">
@@ -223,102 +201,7 @@ export default function App() {
                 </p>
               </div>
             ) : (
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th className="check-cell">
-                        <span className="sr-only">Hoàn thành</span>
-                      </th>
-                      <th>BÀI TẬP / MÔN HỌC</th>
-                      <th>HẠN NỘP</th>
-                      <th>ƯU TIÊN</th>
-                      <th>TRẠNG THÁI</th>
-                      <th>
-                        <span className="sr-only">Thao tác</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => {
-                      const days = daysUntil(item.dueDate, now);
-                      return (
-                        <tr key={item.id} className={item.completed ? 'completed-row' : ''}>
-                          <td className="check-cell">
-                            <button
-                              className={`check-button ${item.completed ? 'checked' : ''}`}
-                              aria-label={`${item.completed ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành'}: ${item.title}`}
-                              aria-pressed={item.completed}
-                              onClick={() => dispatch(toggleAssignment(item.id))}
-                            >
-                              {item.completed && <Check size={14} />}
-                            </button>
-                          </td>
-                          <td className="assignment-name">
-                            <strong>{item.title}</strong>
-                            <span>
-                              <span className="subject-dot" />
-                              {item.subject}
-                            </span>
-                          </td>
-                          <td className="date-cell">
-                            <span>
-                              {new Date(`${item.dueDate}T00:00:00`).toLocaleDateString('vi-VN')}
-                            </span>
-                            <small
-                              className={
-                                !item.completed && days < 0
-                                  ? 'overdue-text'
-                                  : !item.completed && days === 0
-                                    ? 'due-today'
-                                    : ''
-                              }
-                            >
-                              {deadlineLabel(days)}
-                            </small>
-                          </td>
-                          <td>
-                            <span className={`priority ${item.priority}`}>
-                              <i />
-                              {priorities[item.priority]}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`status ${item.completed ? 'done' : days < 0 ? 'late' : 'pending'}`}
-                            >
-                              {item.completed ? (
-                                <CheckCheck size={13} />
-                              ) : days < 0 ? (
-                                <Clock3 size={13} />
-                              ) : (
-                                <Circle size={10} />
-                              )}
-                              {item.completed
-                                ? 'Hoàn thành'
-                                : days < 0
-                                  ? 'Quá hạn'
-                                  : 'Chưa hoàn thành'}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="icon-button delete-button"
-                              aria-label={`Xoá bài tập: ${item.title}`}
-                              onClick={() => {
-                                if (window.confirm(`Xoá bài tập “${item.title}”?`))
-                                  dispatch(deleteAssignment(item.id));
-                              }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <AssignmentList items={items} now={now} />
             )}
             <div className="table-footer">
               <span aria-live="polite">Hiển thị {items.length} bài tập</span>
